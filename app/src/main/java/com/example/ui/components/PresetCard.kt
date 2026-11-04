@@ -18,7 +18,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.Headphones
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Mood
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material.icons.filled.SportsEsports
@@ -32,7 +35,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,13 +42,13 @@ import com.example.audio.PresetType
 import com.example.audio.VoicePreset
 import com.example.ui.theme.DarkSurface
 import com.example.ui.theme.DarkSurfaceElevated
+import com.example.ui.theme.NeonAmber
 import com.example.ui.theme.NeonCardBorder
 import com.example.ui.theme.NeonCyan
 import com.example.ui.theme.NeonGreen
 import com.example.ui.theme.NeonPink
 import com.example.ui.theme.NeonPurple
 import com.example.ui.theme.NeonRed
-import com.example.ui.theme.TextMuted
 import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
 
@@ -58,17 +60,22 @@ fun PresetCard(
     modifier: Modifier = Modifier
 ) {
     val (icon: ImageVector, accentColor: Color) = when (preset.id) {
-        PresetType.GIRL -> Pair(Icons.Default.Face, NeonPink)
-        PresetType.ROBOT -> Pair(Icons.Default.SmartToy, NeonCyan)
-        PresetType.DEEP -> Pair(Icons.Default.RecordVoiceOver, NeonPurple)
+        PresetType.DEEP_MALE -> Pair(Icons.Default.RecordVoiceOver, NeonPurple)
         PresetType.CHILD -> Pair(Icons.Default.Mood, NeonGreen)
-        PresetType.MONSTER -> Pair(Icons.Default.Warning, NeonRed)
-        PresetType.FUNNY -> Pair(Icons.Default.SportsEsports, NeonCyan)
+        PresetType.ROBOT -> Pair(Icons.Default.SmartToy, NeonCyan)
+        PresetType.ALIEN -> Pair(Icons.Default.Public, NeonCyan)
+        PresetType.DEMON -> Pair(Icons.Default.Warning, NeonRed)
+        PresetType.FEMALE -> Pair(Icons.Default.Face, NeonPink)
+        PresetType.CARTOON -> Pair(Icons.Default.SportsEsports, NeonAmber)
+        PresetType.BROADCASTER -> Pair(Icons.Default.Mic, NeonPurple)
+        PresetType.GAMER_PRO -> Pair(Icons.Default.Headphones, NeonGreen)
+        PresetType.FUNNY -> Pair(Icons.Default.Mood, NeonCyan)
         PresetType.CUSTOM -> Pair(Icons.Default.RecordVoiceOver, NeonPurple)
     }
 
     Box(
         modifier = modifier
+            .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(if (isSelected) DarkSurfaceElevated else DarkSurface)
             .border(
@@ -108,13 +115,13 @@ fun PresetCard(
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
                         Text(
-                            text = stringResource(preset.titleRes),
+                            text = preset.titleAr,
                             color = TextPrimary,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "DSP: Pitch ${String.format("%.2f", preset.pitchFactor)}x",
+                            text = "${preset.titleEn} • Pitch ${String.format("%.2f", preset.pitchFactor)}x",
                             color = accentColor,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold
@@ -135,7 +142,7 @@ fun PresetCard(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = stringResource(preset.descRes),
+                text = preset.descAr,
                 color = TextSecondary,
                 fontSize = 11.sp,
                 lineHeight = 16.sp

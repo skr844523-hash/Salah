@@ -31,12 +31,9 @@ jobs:
 
       - name: Setup Environment Files & Keystore
         run: |
-          # Create placeholder .env if not present
           if [ ! -f .env ]; then
             touch .env
           fi
-          
-          # Generate standard debug keystore if omitted by .gitignore
           if [ ! -f debug.keystore ]; then
             keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           fi
@@ -44,19 +41,23 @@ jobs:
       - name: Build Debug APK with Gradle
         run: ./gradlew assembleDebug --stacktrace
 
-      - name: Verify APK Output
+      - name: Locate and Stage APK
         run: |
-          echo "Verifying APK generation..."
-          ls -la app/build/outputs/apk/debug/
-          if [ ! -f app/build/outputs/apk/debug/app-debug.apk ]; then
-            echo "Error: app-debug.apk not found!"
+          echo "Searching for generated APK files..."
+          APK_FILE=$(find . -type f -name "*.apk" | grep -v "androidTest" | head -n 1)
+          if [ -z "$APK_FILE" ]; then
+            echo "Error: No APK found after build!"
             exit 1
           fi
+          echo "Found APK at: $APK_FILE"
+          ls -lh "$APK_FILE"
+          mkdir -p staged-apk
+          cp "$APK_FILE" staged-apk/app-debug.apk
 
       - name: Upload APK to Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: staged-apk/app-debug.apk
           if-no-files-found: error
           retention-days: 30

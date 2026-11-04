@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioFormat
-import android.media.AudioManager
 import android.media.AudioRecord
 import android.media.AudioTrack
 import android.media.MediaRecorder
@@ -21,7 +20,7 @@ class RealtimeAudioLoop(
 ) {
     private val TAG = "RealtimeAudioLoop"
 
-    private val sampleRate = 44100
+    val sampleRate = 44100
     private val channelConfigIn = AudioFormat.CHANNEL_IN_MONO
     private val channelConfigOut = AudioFormat.CHANNEL_OUT_MONO
     private val audioFormat = AudioFormat.ENCODING_PCM_16BIT
@@ -64,7 +63,6 @@ class RealtimeAudioLoop(
                 return false
             }
 
-            // Low-latency buffer multiplier
             val bufferSize = minRecordBufferSize.coerceAtLeast(1024)
 
             audioRecord = AudioRecord(
@@ -76,7 +74,6 @@ class RealtimeAudioLoop(
             )
 
             if (audioRecord?.state != AudioRecord.STATE_INITIALIZED) {
-                // Fallback to DEFAULT source if VOICE_COMMUNICATION not supported
                 audioRecord?.release()
                 audioRecord = AudioRecord(
                     MediaRecorder.AudioSource.MIC,
@@ -143,7 +140,6 @@ class RealtimeAudioLoop(
                         val rms = dspEngine.process(buffer, readShorts)
                         _rmsLevelFlow.value = rms
 
-                        // Compute downsampled waveform for UI
                         val step = (readShorts / 32).coerceAtLeast(1)
                         for (w in 0 until 32) {
                             val sampleIndex = (w * step).coerceAtMost(readShorts - 1)
@@ -151,14 +147,13 @@ class RealtimeAudioLoop(
                         }
                         _waveformFlow.value = waveformPoints.copyOf()
 
-                        // If user is recording a transformed voice clip
+                        // Record clip if requested
                         if (isRecordingClip.get()) {
                             synchronized(recordedChunks) {
                                 recordedChunks.add(buffer.copyOfRange(0, readShorts))
                             }
                         }
 
-                        // Play out processed audio
                         track.write(buffer, 0, readShorts)
                     }
                 }
@@ -212,20 +207,38 @@ class RealtimeAudioLoop(
         }
         isRecordingClip.set(true)
         _isRecordingClipFlow.value = true
+
+        // Ensure loop is actively recording
+        if (!isRunning.get()) {
+            start()
+        }
     }
 
     fun stopAndSaveClip(outputFile: File): Boolean {
         isRecordingClip.set(false)
         _isRecordingClipFlow.value = false
 
-        val chunksCopy = mutableListOf<ShortArray>()
+        val combined: ShortArray
         synchronized(recordedChunks) {
-            chunksCopy.addAll(recordedChunks)
+            val totalShorts = recordedChunks.sumOf { it.size }
+            if (totalShorts == 0) return false
+            combined = ShortArray(totalShorts)
+            var pos = 0
+            for (chunk in recordedChunks) {
+                System.arraycopy(chunk, 0, combined, pos, chunk.size)
+                pos += chunk.size
+            }
             recordedChunks.clear()
         }
 
-        if (chunksCopy.isEmpty()) return false
-        return WavHelper.savePcmToWav(chunksCopy, outputFile, sampleRate, 1)
+        if (combined.isEmpty()) return false
+
+        // Encode to M4A AAC (WhatsApp & Discord voice message standard)
+        val m4aSuccess = AudioEncoder.encodePcmToM4a(combined, outputFile, sampleRate, 1)
+        if (m4aSuccess) return true
+
+        // Fallback to WAV
+        return AudioEncoder.savePcmToWav(combined, outputFile, sampleRate, 1)
     }
 
     fun isRunning(): Boolean = isRunning.get()

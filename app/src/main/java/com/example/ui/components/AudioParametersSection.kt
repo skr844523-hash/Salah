@@ -3,7 +3,6 @@ package com.example.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -34,9 +33,9 @@ import com.example.ui.theme.DarkSurface
 import com.example.ui.theme.DarkSurfaceElevated
 import com.example.ui.theme.NeonCardBorder
 import com.example.ui.theme.NeonCyan
+import com.example.ui.theme.NeonGreen
 import com.example.ui.theme.NeonPink
 import com.example.ui.theme.NeonPurple
-import com.example.ui.theme.TextMuted
 import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
 
@@ -44,14 +43,20 @@ import com.example.ui.theme.TextSecondary
 fun AudioParametersSection(
     pitch: Float,
     onPitchChange: (Float) -> Unit,
-    robotDepth: Float,
-    onRobotDepthChange: (Float) -> Unit,
+    speed: Float,
+    onSpeedChange: (Float) -> Unit,
+    bassDb: Float,
+    onBassDbChange: (Float) -> Unit,
+    trebleDb: Float,
+    onTrebleDbChange: (Float) -> Unit,
     echoFeedback: Float,
     onEchoFeedbackChange: (Float) -> Unit,
+    reverbLevel: Float,
+    onReverbLevelChange: (Float) -> Unit,
     distortion: Float,
     onDistortionChange: (Float) -> Unit,
-    noiseGate: Float,
-    onNoiseGateChange: (Float) -> Unit,
+    noiseReduction: Float,
+    onNoiseReductionChange: (Float) -> Unit,
     masterGain: Float,
     onMasterGainChange: (Float) -> Unit,
     onResetDefaults: () -> Unit,
@@ -79,7 +84,7 @@ fun AudioParametersSection(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "الضبط الدقيق للمعالج الصوتي (DSP)",
+                    text = "التحكم في معالج الصوت (DSP Studio)",
                     color = TextPrimary,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
@@ -105,9 +110,9 @@ fun AudioParametersSection(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // Pitch
+        // 1. Pitch
         ParameterSlider(
-            label = "طبقة الصوت (Pitch Factor)",
+            label = "طبقة الصوت (Pitch)",
             value = pitch,
             onValueChange = onPitchChange,
             valueRange = 0.5f..2.0f,
@@ -115,29 +120,59 @@ fun AudioParametersSection(
             accentColor = NeonCyan
         )
 
-        // Echo / Reverb
+        // 2. Speed
         ParameterSlider(
-            label = "الصدى والتكرار (Echo Feedback)",
+            label = "سرعة الصوت (Speed / Rate)",
+            value = speed,
+            onValueChange = onSpeedChange,
+            valueRange = 0.7f..1.5f,
+            displayValue = String.format("%.2fx", speed),
+            accentColor = NeonGreen
+        )
+
+        // 3. Bass EQ
+        ParameterSlider(
+            label = "تضخيم البيز (Bass Boost)",
+            value = bassDb,
+            onValueChange = onBassDbChange,
+            valueRange = -10f..12f,
+            displayValue = "${bassDb.toInt()} dB",
+            accentColor = NeonPurple
+        )
+
+        // 4. Treble EQ
+        ParameterSlider(
+            label = "حدة النبرة (Treble Clarity)",
+            value = trebleDb,
+            onValueChange = onTrebleDbChange,
+            valueRange = -10f..12f,
+            displayValue = "${trebleDb.toInt()} dB",
+            accentColor = NeonCyan
+        )
+
+        // 5. Echo Delay
+        ParameterSlider(
+            label = "الصدى والتكرار (Echo)",
             value = echoFeedback,
             onValueChange = onEchoFeedbackChange,
             valueRange = 0f..0.7f,
             displayValue = "${(echoFeedback * 100).toInt()}%",
+            accentColor = NeonPink
+        )
+
+        // 6. Reverb
+        ParameterSlider(
+            label = "تردد الغرفة (Reverb Ambience)",
+            value = reverbLevel,
+            onValueChange = onReverbLevelChange,
+            valueRange = 0f..0.8f,
+            displayValue = "${(reverbLevel * 100).toInt()}%",
             accentColor = NeonPurple
         )
 
-        // Robot Modulation
+        // 7. Distortion
         ParameterSlider(
-            label = "التأثير الإلكتروني (Robot Modulation)",
-            value = robotDepth,
-            onValueChange = onRobotDepthChange,
-            valueRange = 0f..1.0f,
-            displayValue = "${(robotDepth * 100).toInt()}%",
-            accentColor = NeonCyan
-        )
-
-        // Distortion
-        ParameterSlider(
-            label = "التشبع والتشويه (Overdrive Distortion)",
+            label = "التشبع والتشويه (Overdrive)",
             value = distortion,
             onValueChange = onDistortionChange,
             valueRange = 0f..0.9f,
@@ -145,24 +180,24 @@ fun AudioParametersSection(
             accentColor = NeonPink
         )
 
-        // Noise Gate
+        // 8. Noise Reduction
         ParameterSlider(
-            label = "عازل الضوضاء المحيطة (Noise Gate)",
-            value = noiseGate,
-            onValueChange = onNoiseGateChange,
+            label = "عزل الضوضاء (Noise Reduction)",
+            value = noiseReduction,
+            onValueChange = onNoiseReductionChange,
             valueRange = 0.001f..0.04f,
-            displayValue = String.format("%.3f", noiseGate),
+            displayValue = String.format("%.3f", noiseReduction),
             accentColor = NeonCyan
         )
 
-        // Master Gain
+        // 9. Volume
         ParameterSlider(
-            label = "مستوى التضخيم العام (Master Gain)",
+            label = "مستوى التضخيم (Volume / Gain)",
             value = masterGain,
             onValueChange = onMasterGainChange,
             valueRange = 0.5f..2.5f,
             displayValue = String.format("%.1fx", masterGain),
-            accentColor = NeonPurple
+            accentColor = NeonGreen
         )
     }
 }
@@ -176,7 +211,7 @@ private fun ParameterSlider(
     displayValue: String,
     accentColor: Color
 ) {
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
@@ -190,7 +225,7 @@ private fun ParameterSlider(
             valueRange = valueRange,
             colors = SliderDefaults.colors(
                 thumbColor = accentColor,
-                activeTrackColor = accentColor.copy(alpha = 0.8f),
+                activeTrackColor = accentColor.copy(alpha = 0.85f),
                 inactiveTrackColor = DarkSurfaceElevated
             )
         )

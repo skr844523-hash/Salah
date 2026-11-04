@@ -11,11 +11,9 @@ import android.content.pm.ServiceInfo
 import android.graphics.PixelFormat
 import android.os.Build
 import android.os.IBinder
-import android.util.DisplayMetrics
 import android.view.Gravity
-import android.view.MotionEvent
-import android.view.View
 import android.view.WindowManager
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -27,7 +25,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -45,12 +42,10 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
@@ -59,9 +54,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -76,7 +69,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.NotificationCompat
-import androidx.core.content.FileProvider
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
@@ -87,6 +79,7 @@ import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.example.MainActivity
 import com.example.R
+import com.example.audio.AudioShareHelper
 import com.example.audio.PresetType
 import com.example.audio.RealtimeAudioLoop
 import com.example.audio.VoiceDspEngine
@@ -94,7 +87,6 @@ import com.example.audio.VoicePreset
 import com.example.ui.theme.DarkBackground
 import com.example.ui.theme.DarkSurface
 import com.example.ui.theme.DarkSurfaceElevated
-import com.example.ui.theme.DarkSurfaceVariant
 import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.theme.NeonCardBorder
 import com.example.ui.theme.NeonCyan
@@ -107,9 +99,7 @@ import com.example.ui.theme.TextSecondary
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
 import java.io.File
 
 class FloatingVoiceService : Service(), LifecycleOwner, SavedStateRegistryOwner {
@@ -123,7 +113,7 @@ class FloatingVoiceService : Service(), LifecycleOwner, SavedStateRegistryOwner 
         const val ACTION_TOGGLE_MUTE = "com.example.voicechanger.TOGGLE_MUTE"
 
         val isServiceRunningFlow = MutableStateFlow(false)
-        val activePresetFlow = MutableStateFlow(PresetType.GIRL)
+        val activePresetFlow = MutableStateFlow(PresetType.DEEP_MALE)
         val isProcessingActiveFlow = MutableStateFlow(false)
         val isMutedFlow = MutableStateFlow(false)
 
@@ -191,9 +181,7 @@ class FloatingVoiceService : Service(), LifecycleOwner, SavedStateRegistryOwner 
                 toggleMute()
             }
             ACTION_START -> {
-                // start foreground
                 startForegroundNotification()
-                // auto start processing on bubble launch
                 if (!audioLoop.isRunning()) {
                     startAudioProcessing()
                 }
@@ -224,11 +212,11 @@ class FloatingVoiceService : Service(), LifecycleOwner, SavedStateRegistryOwner 
         )
 
         val preset = VoicePreset.getPreset(activePresetFlow.value)
-        val presetName = getString(preset.titleRes)
+        val presetName = preset.titleAr
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle(getString(R.string.app_name))
-            .setContentText("الأيقونة العائمة نشطة | $presetName")
+            .setContentTitle("مغير الصوت للألعاب - الأيقونة العائمة")
+            .setContentText("المعالجة الحية نشطة | $presetName")
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentIntent(mainPendingIntent)
             .setOngoing(true)
@@ -328,9 +316,7 @@ class FloatingVoiceService : Service(), LifecycleOwner, SavedStateRegistryOwner 
                             isProcessing = isProcessing,
                             isMuted = isMuted,
                             preset = activePreset,
-                            onBubbleClick = {
-                                openHud()
-                            },
+                            onBubbleClick = { openHud() },
                             onDragDelta = { dx, dy ->
                                 bubbleParams?.let { p ->
                                     p.x += dx.toInt()
@@ -338,9 +324,7 @@ class FloatingVoiceService : Service(), LifecycleOwner, SavedStateRegistryOwner 
                                     windowManager?.updateViewLayout(bubbleComposeView, p)
                                 }
                             },
-                            onDragEnd = {
-                                snapBubbleToEdge()
-                            }
+                            onDragEnd = { snapBubbleToEdge() }
                         )
                     }
                 }
@@ -407,13 +391,21 @@ class FloatingVoiceService : Service(), LifecycleOwner, SavedStateRegistryOwner 
                             },
                             onRecordQuickClip = {
                                 if (isRecordingClip) {
-                                    val cacheFile = File(cacheDir, "gaming_clip_${System.currentTimeMillis()}.wav")
+                                    val cacheFile = File(cacheDir, "voice_msg_${System.currentTimeMillis()}.m4a")
                                     val saved = audioLoop.stopAndSaveClip(cacheFile)
-                                    if (saved) {
-                                        shareAudioClip(cacheFile)
+                                    if (saved && cacheFile.exists() && cacheFile.length() > 0) {
+                                        AudioShareHelper.shareAudio(
+                                            this@FloatingVoiceService,
+                                            cacheFile,
+                                            AudioShareHelper.TargetApp.GENERAL,
+                                            "بصمة صوتية معدلة"
+                                        )
+                                    } else {
+                                        Toast.makeText(this@FloatingVoiceService, "خطأ: لم يتم التقاط صوت!", Toast.LENGTH_SHORT).show()
                                     }
                                 } else {
                                     audioLoop.startRecordingClip()
+                                    Toast.makeText(this@FloatingVoiceService, "بدأ تسجيل البصمة... تحدث الآن!", Toast.LENGTH_SHORT).show()
                                 }
                             },
                             onCloseHud = { closeHud() },
@@ -436,31 +428,6 @@ class FloatingVoiceService : Service(), LifecycleOwner, SavedStateRegistryOwner 
         isHudOpenFlow.value = false
         if (hudComposeView?.parent != null) {
             windowManager?.removeView(hudComposeView)
-        }
-    }
-
-    private fun shareAudioClip(file: File) {
-        try {
-            val uri = FileProvider.getUriForFile(this, "${packageName}.provider", file)
-            val intent = Intent(Intent.ACTION_SEND).apply {
-                type = "audio/wav"
-                putExtra(Intent.EXTRA_STREAM, uri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            val chooser = Intent.createChooser(intent, "إرسال البصمة الصوتية المعدلة").apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            startActivity(chooser)
-        } catch (e: Exception) {
-            // fallback generic share
-            val intent = Intent(Intent.ACTION_SEND).apply {
-                type = "audio/*"
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            startActivity(Intent.createChooser(intent, "مشاركة الصوت").apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            })
         }
     }
 
@@ -510,10 +477,7 @@ fun FloatingBubbleUi(
             .clip(CircleShape)
             .background(
                 Brush.radialGradient(
-                    colors = listOf(
-                        glowColor.copy(alpha = 0.9f),
-                        DarkSurface
-                    )
+                    colors = listOf(glowColor.copy(alpha = 0.9f), DarkSurface)
                 )
             )
             .border(2.5.dp, glowColor, CircleShape)
@@ -546,17 +510,10 @@ fun FloatingBubbleUi(
                 tint = Color.White,
                 modifier = Modifier.size(24.dp)
             )
+            val p = VoicePreset.getPreset(preset)
             Text(
-                text = when (preset) {
-                    PresetType.GIRL -> "فتاة"
-                    PresetType.ROBOT -> "روبوت"
-                    PresetType.DEEP -> "عميق"
-                    PresetType.CHILD -> "طفل"
-                    PresetType.MONSTER -> "وحش"
-                    PresetType.FUNNY -> "مضحك"
-                    PresetType.CUSTOM -> "مخصص"
-                },
-                fontSize = 10.sp,
+                text = p.titleAr.take(5),
+                fontSize = 9.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )
@@ -581,12 +538,11 @@ fun FloatingHudUi(
 ) {
     var pitchSlider by remember { mutableFloatStateOf(dspEngine.pitchFactor) }
     var echoSlider by remember { mutableFloatStateOf(dspEngine.echoFeedback) }
-    var robotSlider by remember { mutableFloatStateOf(dspEngine.robotDepth) }
     var gainSlider by remember { mutableFloatStateOf(dspEngine.masterGain) }
 
     Surface(
         shape = RoundedCornerShape(20.dp),
-        color = DarkBackground.copy(alpha = 0.95f),
+        color = DarkBackground.copy(alpha = 0.96f),
         border = androidx.compose.foundation.BorderStroke(1.5.dp, NeonPurple),
         shadowElevation = 24.dp,
         modifier = Modifier
@@ -606,9 +562,9 @@ fun FloatingHudUi(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "VOICE GAMING HUD",
+                    text = "GAMING VOICE HUD",
                     color = NeonCyan,
-                    fontSize = 14.sp,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Black
                 )
 
@@ -663,8 +619,8 @@ fun FloatingHudUi(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = if (isProcessing) "معالجة نشطة" else "تشغيل الصوت",
-                        fontSize = 12.sp,
+                        text = if (isProcessing) "المعالجة نشطة" else "تشغيل الصوت",
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (isProcessing) Color.Black else Color.White
                     )
@@ -686,7 +642,7 @@ fun FloatingHudUi(
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = if (isMuted) "مكتوم" else "كتم المايك",
-                        fontSize = 12.sp,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
@@ -695,11 +651,11 @@ fun FloatingHudUi(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Presets row
+            // 10 Presets selector
             Text(
                 text = "اختر الشخصية الصوتية",
                 color = TextSecondary,
-                fontSize = 12.sp,
+                fontSize = 11.sp,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Start
@@ -713,17 +669,8 @@ fun FloatingHudUi(
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                PresetType.values().filter { it != PresetType.CUSTOM }.forEach { type ->
-                    val isSelected = (type == activePreset)
-                    val presetName = when (type) {
-                        PresetType.GIRL -> "فتاة"
-                        PresetType.ROBOT -> "روبوت"
-                        PresetType.DEEP -> "عميق"
-                        PresetType.CHILD -> "طفل"
-                        PresetType.MONSTER -> "وحش"
-                        PresetType.FUNNY -> "مضحك"
-                        else -> ""
-                    }
+                VoicePreset.ALL_PRESETS.forEach { preset ->
+                    val isSelected = (preset.id == activePreset)
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
@@ -734,16 +681,15 @@ fun FloatingHudUi(
                                 RoundedCornerShape(8.dp)
                             )
                             .clickable {
-                                onSelectPreset(type)
+                                onSelectPreset(preset.id)
                                 pitchSlider = dspEngine.pitchFactor
                                 echoSlider = dspEngine.echoFeedback
-                                robotSlider = dspEngine.robotDepth
                                 gainSlider = dspEngine.masterGain
                             }
                             .padding(horizontal = 10.dp, vertical = 6.dp)
                     ) {
                         Text(
-                            text = presetName,
+                            text = preset.titleAr,
                             fontSize = 11.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                             color = Color.White
@@ -754,7 +700,7 @@ fun FloatingHudUi(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Sliders: Pitch, Echo, Robot
+            // Quick Sliders
             Column(modifier = Modifier.fillMaxWidth()) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -770,26 +716,6 @@ fun FloatingHudUi(
                         dspEngine.pitchFactor = it
                     },
                     valueRange = 0.5f..2.0f,
-                    colors = SliderDefaults.colors(
-                        thumbColor = NeonCyan,
-                        activeTrackColor = NeonPurple
-                    )
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("الصدى (Echo)", fontSize = 11.sp, color = TextSecondary)
-                    Text("${(echoSlider * 100).toInt()}%", fontSize = 11.sp, color = NeonCyan)
-                }
-                Slider(
-                    value = echoSlider,
-                    onValueChange = {
-                        echoSlider = it
-                        dspEngine.echoFeedback = it
-                    },
-                    valueRange = 0f..0.7f,
                     colors = SliderDefaults.colors(
                         thumbColor = NeonCyan,
                         activeTrackColor = NeonPurple
@@ -819,7 +745,7 @@ fun FloatingHudUi(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Soundboard Voice Note Button (for WhatsApp / Discord sharing)
+            // Soundboard Voice Note Button
             Button(
                 onClick = onRecordQuickClip,
                 colors = ButtonDefaults.buttonColors(

@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <cache-path name="shared_audio" path="." />
+    <cache-path name="shared_cache_audio" path="." />
+    <files-path name="shared_files_audio" path="." />
+    <external-files-path name="shared_ext_audio" path="." />
 </paths>
