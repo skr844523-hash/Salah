@@ -1,0 +1,57 @@
+<resources>
+    <string name="app_name">Voice Changer Gaming</string>
+    <string name="app_title">مغير الصوت للألعاب الذكي</string>
+    <string name="tagline">تغيير الصوت الحي والمباشر لـ PUBG و Discord و WhatsApp</string>
+    
+    <!-- Presets -->
+    <string name="preset_girl">صوت فتاة</string>
+    <string name="preset_girl_desc">طبقة صوت أنثوية ناعمة مع تصفية ترددات الوضوح</string>
+    <string name="preset_robot">صوت روبوت</string>
+    <string name="preset_robot_desc">تأثير إلكتروني معدني وتشكيل حلقي خوارزمي</string>
+    <string name="preset_deep">صوت فخم وعميق</string>
+    <string name="preset_deep_desc">طبقة باريتون عميقة مع تعزيز الصدر والبيز</string>
+    <string name="preset_child">صوت طفل</string>
+    <string name="preset_child_desc">طبقة عالية وسريعة خفيفة مع نقاء النبرة</string>
+    <string name="preset_monster">صوت وحش مرعب</string>
+    <string name="preset_monster_desc">طبقة منخفضة جدًا مع تشويه صوتي Overdrive وتكرار</string>
+    <string name="preset_funny">صوت مضحك كرتوني</string>
+    <string name="preset_funny_desc">تعديل التردد الحي مع نبرة كوميدية كرتونية سريعة</string>
+
+    <!-- Controls -->
+    <string name="floating_bubble_btn">تفعيل الأيقونة العائمة للألعاب</string>
+    <string name="floating_bubble_active">الأيقونة العائمة نشطة فوق التطبيقات</string>
+    <string name="stop_floating_service">إيقاف الخدمة والأيقونة</string>
+    <string name="live_processing_active">المعالجة الحية قيد التشغيل</string>
+    <string name="live_processing_inactive">المعالجة الحية متوقفة</string>
+    <string name="test_voice_btn">اختبار الصوت المباشر (سماعة/سبيكر)</string>
+    <string name="stop_test_btn">إيقاف اختبار الصوت</string>
+    <string name="mic_mute">كتم الميكروفون</string>
+    <string name="mic_unmute">تشغيل الميكروفون</string>
+    <string name="pitch_label">طبقة الصوت (Pitch)</string>
+    <string name="robot_mod_label">تعديل الروبوت (Modulation)</string>
+    <string name="echo_label">الصدى والتكرار (Echo / Reverb)</string>
+    <string name="distortion_label">التشويه الصوتي (Distortion)</string>
+    <string name="noise_gate_label">بوابة عزل الضوضاء (Noise Gate)</string>
+    <string name="master_gain_label">مستوى الصوت والمضخم (Gain)</string>
+    
+    <!-- Audio Routing & Android Realities -->
+    <string name="routing_reality_title">الحقيقة التقنية: توجيه الصوت للألعاب والمكالمات</string>
+    <string name="routing_reality_desc">نظام أندرويد يفرض عزل أمني (Sandbox) يمنع أي تطبيق عادي من استبدال ميكروفون النظام لتطبيق آخر مثل PUBG أو Discord بدون صلاحيات Root أو كابل توجيه. إليك الطرق الحقيقية الناجحة:</string>
+    <string name="mode_monitor_title">1. وضع المراقبة الحية (Headset Live Loop)</string>
+    <string name="mode_monitor_desc">تستمع فورياً لصوتك المعدل في السماعة لتتدرب وتضبط النبرة بأقل تأخير (زمن استجابة أقل من 35ms).</string>
+    <string name="mode_hardware_title">2. التوصيل الخارجي للألعاب (Hardware Splitter / AUX)</string>
+    <string name="mode_hardware_desc">استخدام كابل Y-Splitter أو كارت صوت خارجي يربط مخرج صوت الهاتف المعدل بمدخل الميكروفون — وهي الطريقة الاحترافية 100% التي يستخدمها أشهر الستريمرز في PUBG Mobile!</string>
+    <string name="mode_soundboard_title">3. لوحة المذكرات الصوتية العائمة (Floating Soundboard)</string>
+    <string name="mode_soundboard_desc">سجّل مقطع صوتي مخصص بالصوت المعدل بلمسة واحدة وأرسله كبصمة صوتية فوريّة لواتساب، ديسكورد، وتيليجرام مباشرة من الأيقونة العائمة.</string>
+    <string name="mode_speaker_title">4. وضع مكبر الصوت القريب (Proximity Broadcast)</string>
+    <string name="mode_speaker_desc">تشغيل الصوت المعدل عبر مكبر صوت الهاتف أو سبيكر خارجي قريب من ميكروفون السماعة ليلتقطه أعضاء فريقك في اللعبة فورياً.</string>
+
+    <!-- Permissions -->
+    <string name="permission_overlay_title">إذن الظهور فوق التطبيقات (Overlay)</string>
+    <string name="permission_overlay_desc">مطلوب لعرض الأيقونة العائمة ولوحة التحكم السريعة أثناء لعب PUBG دون إغلاق اللعبة.</string>
+    <string name="permission_mic_title">إذن الميكروفون (Microphone)</string>
+    <string name="permission_mic_desc">مطلوب لالتقاط صوتك وتطبيق خوارزميات الـ DSP في الزمن الحقيقي.</string>
+    <string name="grant_overlay_btn">منح إذن الظهور فوق التطبيقات</string>
+    <string name="grant_mic_btn">منح إذن الميكروفون</string>
+    <string name="all_permissions_granted">جميع الأذونات مفعلة بنجاح</string>
+</resources>
